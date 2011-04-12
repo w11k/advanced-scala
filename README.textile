@@ -1,0 +1,7 @@
+h1. Advanced Scala examples
+
+This project contains some more or less advanced examples for the "Scala":http://www.scala-lang.org programming language.
+
+h2. License
+
+This code is open source software licensed under the "Apache 2.0 License":http://www.apache.org/licenses/LICENSE-2.0.html. If you like it, feel free use it!
