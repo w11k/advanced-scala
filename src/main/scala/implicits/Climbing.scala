@@ -16,7 +16,19 @@
 package com.weiglewilczek.advancedscala
 package implicits
 
-object Grade {
+import scala.xml.NodeSeq
+
+trait XmlSerializable[A] {
+  implicit def toXmlSerializable(a: A) = new {
+    def toXml(implicit format: XmlFormat[A]) = format toXml a
+  }
+}
+
+trait XmlFormat[A] {
+  def toXml(a: A): NodeSeq
+}
+
+object Grade extends XmlSerializable[Grade] {
 
   object Qualifier extends Enumeration {
     val Plus = Value("+")
@@ -26,8 +38,8 @@ object Grade {
 
   implicit def intToGrade(value: Int) = Grade(value)
 
-  implicit def toXmlSerializable(grade: Grade) = new {
-    def toXml = {
+  implicit object GradeXmlFormat extends XmlFormat[Grade] {
+    def toXml(grade: Grade) = {
       import scala.xml.{ Attribute, Null, Text }
       (<grade value={ grade.value.toString } /> /: grade.qualifier) { (xml, qualifier) =>
         xml % Attribute("qualifier", Text(qualifier.id.toString), Null)
@@ -40,9 +52,9 @@ case class Grade(value: Int, qualifier: Option[Grade.Qualifier.Value] = None) {
   override def toString = "%s%s".format(value, qualifier getOrElse "")
 }
 
-object Route {
-  implicit def toXmlSerializable(route: Route) = new {
-    def toXml = <route name={ route.name } >{ route.grade.toXml }</route>
+object Route extends XmlSerializable[Route] {
+  implicit object RouteXmlFormat extends XmlFormat[Route] {
+    def toXml(route: Route) = <route name={ route.name } >{ route.grade.toXml }</route>
   }
 }
 
@@ -56,6 +68,9 @@ object ClimbingApp {
     val fightGravity = Route("Fight Gravity", Grade(8, Grade.Qualifier.Plus))
     println(fightGravity)
     println(fightGravity.toXml)
+    implicit val localRouteXmlFormat = new XmlFormat[Route] {
+      def toXml(route: Route) = <dummy/>
+    }
     val kasperl = Route("Kasperltheater", 8)
     println(kasperl)
     println(kasperl.toXml)
