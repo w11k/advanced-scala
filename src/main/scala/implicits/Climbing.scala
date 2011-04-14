@@ -25,10 +25,25 @@ object Grade {
   }
 
   implicit def intToGrade(value: Int) = Grade(value)
+
+  implicit def toXmlSerializable(grade: Grade) = new {
+    def toXml = {
+      import scala.xml.{ Attribute, Null, Text }
+      (<grade value={ grade.value.toString } /> /: grade.qualifier) { (xml, qualifier) =>
+        xml % Attribute("qualifier", Text(qualifier.id.toString), Null)
+      }
+    }
+  }
 }
 
 case class Grade(value: Int, qualifier: Option[Grade.Qualifier.Value] = None) {
   override def toString = "%s%s".format(value, qualifier getOrElse "")
+}
+
+object Route {
+  implicit def toXmlSerializable(route: Route) = new {
+    def toXml = <route name={ route.name } >{ route.grade.toXml }</route>
+  }
 }
 
 case class Route(name: String, grade: Grade) {
@@ -40,7 +55,9 @@ object ClimbingApp {
   def main(args: Array[String]) {
     val fightGravity = Route("Fight Gravity", Grade(8, Grade.Qualifier.Plus))
     println(fightGravity)
+    println(fightGravity.toXml)
     val kasperl = Route("Kasperltheater", 8)
     println(kasperl)
+    println(kasperl.toXml)
   }
 }
