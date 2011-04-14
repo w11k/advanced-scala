@@ -25,3 +25,14 @@ out
 
 # TextMate
 *.tmproj
+
+# TEX
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+slides/advanced-scala.pdf
