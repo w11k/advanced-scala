@@ -17,10 +17,14 @@ package com.weiglewilczek.advancedscala
 package implicits
 
 object Grade {
+
   object Qualifier extends Enumeration {
     val Plus = Value("+")
     val Minus = Value("-")
+    implicit def valueToOption(value: Value) = Option(value)
   }
+
+  implicit def intToGrade(value: Int) = Grade(value)
 }
 
 case class Grade(value: Int, qualifier: Option[Grade.Qualifier.Value] = None) {
@@ -34,9 +38,9 @@ case class Route(name: String, grade: Grade) {
 object ClimbingApp {
 
   def main(args: Array[String]) {
-    val fightGravity = Route("Fight Gravity", Grade(8, Some(Grade.Qualifier.Plus)))
+    val fightGravity = Route("Fight Gravity", Grade(8, Grade.Qualifier.Plus))
     println(fightGravity)
-    val kasperl = Route("Kasperltheater", Grade(8))
+    val kasperl = Route("Kasperltheater", 8)
     println(kasperl)
   }
 }
