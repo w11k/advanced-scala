@@ -14,34 +14,29 @@
  * limitations under the License.
  */
 package com.weiglewilczek.advancedscala
-package traits
+package implicits
 
-abstract class Animal {
-  def name: String
+object Grade {
+  object Qualifier extends Enumeration {
+    val Plus = Value("+")
+    val Minus = Value("-")
+  }
 }
 
-class Bird(override val name: String) extends Animal {
-  def fly = "I can fly."
+case class Grade(value: Int, qualifier: Option[Grade.Qualifier.Value] = None) {
+  override def toString = "%s%s".format(value, qualifier getOrElse "")
 }
 
-class Fish(override val name: String) extends Animal with CanSwim
-
-class Duck(name: String) extends Bird(name) with CanSwim
-
-trait CanSwim {
-  def swim = "I can swim."
+case class Route(name: String, grade: Grade) {
+  override def toString = "%s (%s)".format(name, grade)
 }
 
-trait MichaelBuble extends Bird {
-  override def fly = "I feel good and " + super.fly
-}
+object ClimbingApp {
 
-object AnimalsApp extends Application {
-
-  val donald = new Duck("Donald")
-  println(donald.fly)
-  println(donald.swim)
-
-  val michael = new Bird("Michael") with MichaelBuble
-  println(michael.fly)
+  def main(args: Array[String]) {
+    val fightGravity = Route("Fight Gravity", Grade(8, Some(Grade.Qualifier.Plus)))
+    println(fightGravity)
+    val kasperl = Route("Kasperltheater", Grade(8))
+    println(kasperl)
+  }
 }

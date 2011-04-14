@@ -18,10 +18,6 @@ package cakepattern
 
 import scala.collection.immutable.Seq
 
-object NewsApp extends Application {
-  Configuration.news.latestMessages foreach println
-}
-
 object Configuration extends NewsContext {
 
   lazy val news = new News
@@ -55,4 +51,8 @@ class SportsChannel extends Channel {
 class MusicChannel extends Channel {
   override def messages =
     "Eminem Recovery rocks!" :: "Hole Nobody's Daughter is great!" :: Nil
+}
+
+object NewsApp extends Application {
+  Configuration.news.latestMessages foreach println
 }
