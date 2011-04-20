@@ -16,6 +16,8 @@
 package com.weiglewilczek.advancedscala
 package continuations
 
+import scala.util.continuations.{ reset, shift }
+
 object ContinuationsApp extends Application {
 
   def plusOne(i: Int) = i + 1
@@ -28,4 +30,14 @@ object ContinuationsApp extends Application {
   def plusOneCps2(i: Int, cont: Int => Int) =
     if (i > 0) cont(i + 1) else Int.MinValue
   println(plusOneCps2(0, minusOne))
+
+  def plusOneCont(i: Int) = shift { cont: (Int => Int) =>
+    cont(i + 1)
+  }
+  println(reset { minusOne(plusOneCont(0)) })
+
+  def plusOneCont2(i: Int) = shift { cont: (Int => Int) =>
+    if (i > 0) cont(i + 1) else Int.MinValue
+  }
+  println(reset { minusOne(plusOneCont2(0)) })
 }
