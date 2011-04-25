@@ -6,6 +6,8 @@
 
 \usepackage{listings}
 
+\usepackage{german}
+
 \usecolortheme{beaver}
 \definecolor{darkred}{RGB}{155,29,35}
 \setbeamertemplate{navigation symbols}{}
@@ -152,7 +154,7 @@ object Grade {
   \frametitle{Was k\"onnten wir sonst noch besser machen?}
   \begin{itemize}
     \item Annahme: Wir sollen unsere Objekte nach XML serialisieren
-    \item Schlechte Idee: Klassen mit \emph{toXml}-Methoden ``verschmutzen''
+    \item Schlechte Idee: Klassen mit \emph{toXml}-Methoden "`verschmutzen"'
     \item Besser: Wir rufen einfach \emph{toXml} auf unseren Objekten auf!
     \begin{lstlisting}
 println(Route("Kasperltheater", 8).toXml)
@@ -183,7 +185,7 @@ object Route {
 \begin{frame}[fragile]
   \frametitle{Aber geht es nicht noch besser?}
   \begin{itemize}
-    \item W\"are es nicht sch\"oner, wenn es \emph{toXml} f\"ur ``alles'' g\"abe?
+    \item W\"are es nicht noch sch\"oner, wenn es \emph{toXml} f\"ur "`alles"' g\"abe?
     \item Sodass wir ... 
     \item ... zumindest die Signatur abstrahieren k\"onnen
     \item ... und flexibel bei der Implementierung bleiben
@@ -207,7 +209,7 @@ trait XmlFormat[A] {
 }
     \end{lstlisting}
     \item Wir delegieren also zum impliziten \emph{XmlFormat[A]}
-    \item Aber woher bekommen wir ``Instanzen'' f\"ur diese \emph{Type Class}
+    \item Aber woher bekommen wir "`Instanzen"' f\"ur diese \emph{Type Class}
   \end{itemize}
 \end{frame}
 
@@ -234,21 +236,108 @@ object Route extends XmlSerializable[Route] {
 \section{Delimited Continuations}
 
 \begin{frame}
-  \frametitle{Delimited continuations}
+  \frametitle{Delimited Continuations}
   \includegraphics[width=\linewidth]{img/continue.jpg}
 \end{frame}
 
-\begin{frame}
-  \frametitle{Continuation passing style}
+\begin{frame}[fragile]
+  \frametitle{Continuation Passing Style}
   \begin{itemize}
-    \item bla
-    \item bla
+    \item Gew\"ohnlich ruft die "`sp\"atere"' Funktion die "`fr\"uhere"' auf:
+    \begin{lstlisting}
+def plusOne(i: Int) = i + 1
+def minusOne(i: Int) = i - 1
+println(minusOne(plusOne(0)))
+    \end{lstlisting}
+    \item Aber es geht auch "`anders herum"':
+    \begin{lstlisting}
+def plusOneCps(i: Int, cont: Int => Int) = cont(i + 1)
+println(plusOneCps(0, minusOne))
+    \end{lstlisting}
+    \item "`Sp\"atere"' Funktion als Argument der "`fr\"uheren"'!
   \end{itemize}
 \end{frame}
 
+\begin{frame}[fragile]
+  \frametitle{Invertierung des Kontrollflusses}
+  \begin{itemize}
+    \item Die "`fr\"uhere"' Funktion entscheidet, wie es weiter geht:
+    \begin{lstlisting}
+def plusOneCps2(i: Int, cont: Int => Int) =
+  if (i > 0) cont(i + 1) else Int.MinValue
+    \end{lstlisting}
+    \item Das kann sehr n\"utzlich sein, f\"uhrt jedoch zu schwer verst\"andlichem Code f\"ur den Aufrufer:
+    \begin{lstlisting}
+println(plusOneCps2(0, minusOne))
+    \end{lstlisting}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Scala macht es wieder einfach!}
+  \begin{itemize}
+    \item Mit \emph{shift} greifen wir uns eine Continuation:
+    \begin{lstlisting}
+def plusOneCont2(i: Int) =
+  shift { cont: (Int => Int) =>
+    if (i > 0) cont(i + 1) else Int.MinValue
+  }
+    \end{lstlisting}
+    \item Mit \emph{reset} geben wir die Grenzen vor:
+    \begin{lstlisting}
+println(reset { minusOne(plusOneCont2(0)) })
+    \end{lstlisting}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Beispiel: Eingabe-Validierung I}
+  \begin{itemize}
+    \item Eigentlich haben wir einen einfachen Kontrollfluss:
+    \begin{lstlisting}
+val x = read("First Int: ")
+val y = read("Second Int: ")
+val result = x + y
+println("Result: %s" format result)
+
+def read(label: String) = readLine(label).toInt
+    \end{lstlisting}
+    \item Aber: Eingabe-Fehler m\"ussten vom Aufrufer behandelt werden
+    \item Der Kontrollfluss wird kompliziert!
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Beispiel: Eingabe-Validierung II}
+  \begin{itemize}
+    \item Verlagern der Validierung in die \emph{read}-Methode:
+    \begin{lstlisting}
+def read(label: String) =
+  shift { cont: (Int => Unit) =>
+    val s = readLine(label)
+    try {
+      cont(s.toInt)
+    } catch {
+      case _: NumberFormatException =>
+        println("Illegal argument: %s" format s)
+    }
+  }
+    \end{lstlisting}
+    \item Dadurch bleibt der Kontrollfluss einfach!
+  \end{itemize}
+\end{frame}
+
+
+
+% End %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{frame}
-  \frametitle{Bla bla}
-  Bla bla
+  \frametitle{Danke!}
+  \begin{itemize}
+    \item Folien: \href{https://github.com/downloads/weiglewilczek/advanced-scala/advanced-scala.pdf}{github.com/downloads/weiglewilczek/advanced-scala/advanced-scala.pdf}
+    \item Code: \href{https://github.com/weiglewilczek/advanced-scala}{github.com/weiglewilczek/advanced-scala}
+    \item Twitter: \href{http://twitter.com/hseeberger}{hseeberger} und \href{http://twitter.com/romanroe}{romanroe}
+  \end{itemize}
 \end{frame}
 
 
