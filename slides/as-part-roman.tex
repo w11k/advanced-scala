@@ -1,0 +1,335 @@
+
+\begin{frame}[fragile]{}
+\begin{center}
+	\textbf{Builder Pattern}
+\end{center}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Builder Pattern}
+\begin{itemize}
+	\item API Design zum Setzen mehrere Parameter
+	\item setter-Methode-Ansatz
+	\begin{lstlisting}
+		val config = new Config
+		config.setA(1)
+		config.enableLog()
+		config.setB(2)
+		val created = config.create()
+	\end{lstlisting}
+	\item Builder-Pattern-Ansatz
+	\begin{lstlisting}
+		val created =
+		  new Config().setA(1).setB(2).enableLog().create()
+	\end{lstlisting}	
+\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Builder Pattern}
+\begin{itemize}
+	\item Methodenaufrufe geben i.d.R. \textbf{this} zurück...
+	\item ... oder ein Objekt welches sich die Konfiguration "merkt"
+	\item Manche Konfiguration stehen eventuell erst nach dem Setzen bestimmer Werte zur Verfügung
+	\begin{lstlisting}
+		val created = new Config().enableLog().withDbLog().create()
+	\end{lstlisting}
+\end{itemize}
+\end{frame}  
+  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{itemize}
+	\item Definition
+		\begin{lstlisting}
+		class ABad {
+		  var number = 1
+  
+		  def double(): ABad = {
+		    number *= 2
+		    this
+		  }
+		  def triple(): ABad = {
+		    number = number * 3
+		    this
+		  }
+		}
+		\end{lstlisting}
+	\item Verwendung
+		\begin{lstlisting}
+		println(new ABad().double().triple().number)
+		\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{itemize}
+	\item Definition
+		\begin{lstlisting}
+		class BBad1 extends ABad {
+		  def random(): BBad1 = {
+		    number *= Random.nextInt
+		    this
+		  }
+		}
+		\end{lstlisting}
+	\item Verwendung
+		\begin{lstlisting}
+		println(new BBad1().random().number)
+		println(new BBad1().random().triple().number)
+		\end{lstlisting}
+	\item Problem
+		\begin{lstlisting}
+		println(new BBad1().double().triple().random().number)
+		\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{itemize}
+	\item Lösung (wie in Java)
+		\begin{lstlisting}
+		class BBad2 extends ABad {
+		  override def double(): BBad2 = {
+		    super.double()
+		    this
+		  }
+
+		  override def triple(): BBad2 = {
+		    super.triple()
+		    this
+		  }
+
+		  def random(): BBad2 = {
+		    number *= Random.nextInt
+		    this
+		  }
+		}
+		\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{itemize}
+	\item Lösung (wie in Java)
+		\begin{itemize}
+			\item Alle Methodendeklarationen müssen wiederholt werden
+			\item Lösung ist sehr fragil, da Änderungen in der Superklasse (z.B. neue Methode) die Kette "unterbrechen" können
+			\item Alle Subklassen müssen informiert und nachgezogen werden
+		\end{itemize}
+\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{itemize}
+	\item Lösung mit Scala this.type
+		\begin{lstlisting}
+		class AGood {
+		  var number = 1
+		  def double(): this.type = {
+		    number *= 2
+		    this
+		  }
+		  def triple(): this.type = {
+		    number = number * 3
+		    this
+		  }
+		}
+		\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{itemize}
+	\item Lösung mit Scala this.type
+		\begin{lstlisting}
+		class BGood extends AGood {
+		  def random(): this.type = {
+		    number *= Random.nextInt
+		    this
+		  }
+		}
+		\end{lstlisting}
+	\item Verwendung
+		\begin{lstlisting}
+		println(new BGood().double().triple().random().number)
+		\end{lstlisting}
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Stackable Modifications}
+\begin{itemize}
+	\item Logging Klassen
+		\begin{itemize}
+			\item Basis-Interface: \verb!Log!
+			\item Implementierungen: \verb!NormalLog!, \verb!DBLog!
+		\end{itemize}
+		\pause
+	\item Modifizierungen
+		\begin{itemize}
+			\item \verb!ImportantLog! (Text + '!!!')
+			\item \verb!SuperImportantLog! (Großbuchstaben)
+		\end{itemize}
+		\pause
+	\item Ziel
+		\begin{itemize}
+			\item Log-Implementierungen sollen beliebig mit den Modifizierungen erweitert werden können
+			\item Modifizierungen müssen sich kombinieren lassen
+			\item Je nach Komplexität kann die Reihenfolge wichtig sein
+		\end{itemize}
+\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Stackable Modifications - Log Klassen}
+\begin{lstlisting}
+abstract class Log {
+  def log(msg: String): Unit
+}
+
+class ConsoleLog extends Log {
+  def log(msg: String) {
+    println("LOG: " + msg)
+  }
+}
+
+class DBLog extends Log {
+  def log(msg: String) {
+    Database.save(msg)
+  }
+}
+\end{lstlisting}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Stackable Modifications - Modifizierungen}
+\begin{lstlisting}
+trait ImportantLog extends Log {
+  abstract override def log(msg: String) {
+    super.log(msg +  "!!!")
+  }
+}
+
+trait SuperImportantLog extends Log {
+  abstract override def log(msg: String) {
+    super.log(msg.toUpperCase)
+  }
+}
+\end{lstlisting}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Stackable Modifications - Verwendung}
+\begin{lstlisting}
+class AppLog extends ConsoleLog with ImportantLog with SuperImportantLog
+val log1 = new AppLog
+log1.log("A log message")
+
+val log2 = new ConsoleLog with ImportantLog
+log2.log("Another message")
+
+val log3 = new DBLog with SuperImportantLog
+log3.log("Another message")
+
+val log4 = new DBLog with ImportantLog with SuperImportantLog
+log4.log("Another message")
+\end{lstlisting}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Kontrollstrukturen abstrahieren}
+\center \textbf{Aufgabe} \linebreak	
+(1) Resource öffnen (2) Resource verwenden \linebreak (3) Resource schließen (4) Fehler abfangen
+\center \textbf{Java}
+\begin{lstlisting}[language=java]
+InputStream is = null;
+try {
+  is = new FileInputStream(new File("..."));
+  is.read();
+} catch (Exception e) {
+  // ...
+} finally {
+  try {
+    is.close();
+  } catch (Exception e1) {
+    // ...
+  }
+}
+\end{lstlisting}
+\end{frame}  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Kontrollstrukturen abstrahieren}
+\center \textbf{Aufgabe} \linebreak	
+(1) Resource öffnen (2) Resource verwenden \linebreak (3) Resource schließen (4) Fehler abfangen
+\center \textbf{Scala}
+\begin{lstlisting}
+withResource(new FileInputStream(new File("..."))) { is =>
+  // ...
+}
+\end{lstlisting}
+\end{frame}  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Kontrollstrukturen abstrahieren}
+\center \textbf{Aufgabe} \linebreak	
+(1) Resource öffnen (2) Resource verwenden \linebreak (3) Resource schließen (4) Fehler abfangen
+\center \textbf{Scala Implementierung}
+\begin{lstlisting}
+def withResource[A <: { def close() }](res: A)(block: A => Any) {
+  try {
+    block(res)
+  } catch {
+    case e: Throwable => throw e
+  } finally {
+    try {
+      res.close()
+    } catch {
+      case e: Throwable => throw e
+    }
+  }
+}
+\end{lstlisting}
+\end{frame}  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Kontrollstrukturen abstrahieren}
+\begin{itemize}
+	\item Java-Code verwendet oft Exceptions als gültigen Rückgabewert
+	\item Automatische Exception / Option Konvertierung im Scala-Kontext daher sinnvoll
+\end{itemize}
+\begin{lstlisting}
+import scala.util.control.Exception._
+
+val saveParse = catching(classOf[NumberFormatException])
+val numberOption = saveParse opt { "123b".toInt }   
+
+numberOption match {
+  case Some(n) => n
+  case None => 0
+}
+\end{lstlisting}
+\end{frame}  
