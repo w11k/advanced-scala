@@ -382,20 +382,19 @@ withResource(new FileInputStream(new File("..."))) { is =>
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}[fragile]{Kontrollstrukturen abstrahieren}
-\center \textbf{Aufgabe} \linebreak	
-(1) Resource öffnen (2) Resource verwenden \linebreak (3) Resource schließen (4) Fehler abfangen
 \center \textbf{Scala Implementierung}
 \begin{lstlisting}
-def withResource[A <: { def close() }](res: A)(block: A => Any) {
+def withResource[A <: { def close() }]
+                  (res: A)(block: A => Any) {
   try {
     block(res)
   } catch {
-    case e: Throwable => throw e
+    // ...
   } finally {
     try {
       res.close()
     } catch {
-      case e: Throwable => throw e
+      // ...
     }
   }
 }
