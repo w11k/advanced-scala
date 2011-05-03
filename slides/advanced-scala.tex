@@ -87,14 +87,12 @@
 \end{frame}
 
 
-
 % Section %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Builder Pattern}
+\section{Fluent Interface}
 
-
-\begin{frame}[fragile]{Builder Pattern}
+\begin{frame}[fragile]{Fluent Interface}
 \begin{itemize}
-	\item API Design zum Setzen mehrere Parameter
+	\item Beispiel Builder Pattern
 	\item setter-Methode-Ansatz
 	\begin{lstlisting}
 		val config = new Config
@@ -103,7 +101,7 @@
 		config.setB(2)
 		val created = config.create()
 	\end{lstlisting}
-	\item Builder-Pattern-Ansatz
+	\item Fluent Interface-Ansatz
 	\begin{lstlisting}
 		val created =
 		  new Config().setA(1).setB(2).enableLog().create()
@@ -113,7 +111,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}[fragile]{Builder Pattern}
+\begin{frame}[fragile]{Fluent Interface}
 \begin{itemize}
 	\item Methodenaufrufe geben i.d.R. \textbf{this} zurück...
 	\item ... oder ein Objekt welches sich die Konfiguration "`merkt"'
@@ -126,18 +124,18 @@
   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{frame}[fragile]{Fluent Interface - Implementierung}
 \begin{itemize}
 	\item Definition
 		\begin{lstlisting}
-		class ABad {
+		class SimpleOps {
 		  var number = 1
   
-		  def double(): ABad = {
+		  def double(): SimpleOps = {
 		    number *= 2
 		    this
 		  }
-		  def triple(): ABad = {
+		  def triple(): SimpleOps = {
 		    number = number * 3
 		    this
 		  }
@@ -145,19 +143,19 @@
 		\end{lstlisting}
 	\item Verwendung
 		\begin{lstlisting}
-		println(new ABad().double().triple().number)
+		println(new SimpleOps().double().triple().number)
 		\end{lstlisting}
 \end{itemize}
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{frame}[fragile]{Fluent Interface - Implementierung}
 \begin{itemize}
 	\item Definition
 		\begin{lstlisting}
-		class BBad1 extends ABad {
-		  def random(): BBad1 = {
+		class RandomOps extends SimpleOps {
+		  def random(): RandomOps = {
 		    number *= Random.nextInt
 		    this
 		  }
@@ -165,34 +163,35 @@
 		\end{lstlisting}
 	\item Verwendung
 		\begin{lstlisting}
-		println(new BBad1().random().number)
-		println(new BBad1().random().triple().number)
+		println(new RandomOps().random().number)
+		println(new RandomOps().random().triple().number)
 		\end{lstlisting}
+	\pause
 	\item Problem
 		\begin{lstlisting}
-		println(new BBad1().double().triple().random().number)
+		println(new RandomOps().double().triple().random().number)
 		\end{lstlisting}
 \end{itemize}
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{frame}[fragile]{Fluent Interface - Implementierung}
 \begin{itemize}
-	\item Lösung (wie in Java)
+	\item Lösung (nicht perfekt)
 		\begin{lstlisting}
-		class BBad2 extends ABad {
-		  override def double(): BBad2 = {
+		class RandomOps extends SimpleOps {
+		  override def double(): RandomOps = {
 		    super.double()
 		    this
 		  }
 
-		  override def triple(): BBad2 = {
+		  override def triple(): RandomOps = {
 		    super.triple()
 		    this
 		  }
 
-		  def random(): BBad2 = {
+		  def random(): RandomOps = {
 		    number *= Random.nextInt
 		    this
 		  }
@@ -203,9 +202,9 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{frame}[fragile]{Fluent Interface - Implementierung}
 \begin{itemize}
-	\item Lösung (wie in Java)
+	\item Bewertung Lösung
 		\begin{itemize}
 			\item Alle Methodendeklarationen müssen wiederholt werden
 			\item Lösung ist sehr fragil, da Änderungen in der Superklasse (z.B. neue Methode) die Kette "`unterbrechen"' können
@@ -216,11 +215,11 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{frame}[fragile]{Fluent Interface - Implementierung}
 \begin{itemize}
 	\item Lösung mit Scala this.type
 		\begin{lstlisting}
-		class AGood {
+		class SimpleOps {
 		  var number = 1
 		  def double(): this.type = {
 		    number *= 2
@@ -237,11 +236,11 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}[fragile]{Builder Pattern - Implementierung}
+\begin{frame}[fragile]{Fluent Interface - Implementierung}
 \begin{itemize}
 	\item Lösung mit Scala this.type
 		\begin{lstlisting}
-		class BGood extends AGood {
+		class RandomOps extends SimpleOps {
 		  def random(): this.type = {
 		    number *= Random.nextInt
 		    this
@@ -250,7 +249,7 @@
 		\end{lstlisting}
 	\item Verwendung
 		\begin{lstlisting}
-		println(new BGood().double().triple().random().number)
+		println(new RandomOps().double().triple().random().number)
 		\end{lstlisting}
 \end{itemize}
 \end{frame}
